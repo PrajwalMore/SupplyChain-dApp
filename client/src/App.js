@@ -6,7 +6,7 @@ import getWeb3 from "./getWeb3";
 import "./App.css";
 
 class App extends Component {
-  state = {loaded:false, cost:0 ,itemName:"example_1"};//state in React.js
+  state = { loaded: false, cost: 0, itemName: "example_1" };//state in React.js
 
   componentDidMount = async () => {
     try {
@@ -18,21 +18,21 @@ class App extends Component {
 
       // Get the contract instance.
       this.networkId = await this.web3.eth.net.getId();
-      console.log(this.networkId);//#
-      this.itemManager= new this.web3.eth.Contract(
+      this.itemManager = new this.web3.eth.Contract(
         ItemManagerContract.abi,
         ItemManagerContract.networks[this.networkId] && ItemManagerContract.networks[this.networkId].address,
       );
-        console.log(this.itemManager);//#
-      this.item= new this.web3.eth.Contract(
+     
+      this.item = new this.web3.eth.Contract(
         ItemContract.abi,
         ItemContract.networks[this.networkId] && ItemContract.networks[this.networkId].address ,
       );
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
+      
       this.listenToPaymentEvent();
-      this.setState({ loaded:true });
+      this.setState({ loaded: true });
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -42,32 +42,31 @@ class App extends Component {
     }
   };
 
-  listenToPaymentEvent=()=>{
-    let self=this;
-    this.itemManager.events.SupplyChainStep().on("data", async function(evt){
-        console.log(evt);
-        let itemObj=await self.itemManager.methods.items(evt.returnValues._itemIndex).call();
-        console.log("itemObject "+itemObj);//#
-        alert("Item "+itemObj._identifier +"was paid,deliver it now!");
-        console.log("Item "+itemObj._identifier +"was paid,deliver it now!");
+  listenToPaymentEvent = () => {
+    let self = this;
+    this.itemManager.events.SupplyChainStep().on("data", async function (evt) {
+      console.log(evt);
+      //Checking if item is paid.
+      if (evt.returnValues._step == 1) {
+        let itemObj = await self.itemManager.methods.items(evt.returnValues._itemIndex).call();
+        alert("Item " + itemObj._identifier + " was paid,deliver it now!");
+      }
     });
   }
-  handleInputChange=(event)=>{  
-    const target= event.target;
-    const value=target.type==="checkbox" ? target.checked :target.value;
-    console.log("value of target.type "+value);
-    const name= target.name;
+  handleInputChange = (event) => {
+    const target = event.target;
+    const value = target.type === "checkbox" ? target.checked : target.value;
+    const name = target.name;
     this.setState({
-      [name]:value
+      [name]: value
     });
   }
 
-  handleSubmit=async()=>{
-    const {cost, itemName}=this.state;
-    console.log(cost,itemName,this.itemManager);
-    let result =await this.itemManager.methods.createItem(itemName, cost).send({from: this.accounts[0]}); 
-    console.log("this.itemManager.methods.createItem(itemName, cost).send({from: this.accounts[0]});  "+this.itemManager.methods.createItem(itemName, cost).send({from: this.accounts[0]}));
-    alert("send "+cost+" Wei to "+result.events.SupplyChainStep.returnValues._itemAddress);
+  handleSubmit = async () => {
+    const { cost, itemName } = this.state;
+    let result = await this.itemManager.methods.createItem(itemName, cost).send({ from: this.accounts[0] });
+
+    alert("send " + cost + " Wei to " + result.events.SupplyChainStep.returnValues._itemAddress);
   }
 
   render() {
@@ -79,10 +78,10 @@ class App extends Component {
         <h1>Smart Contract Example</h1>
         <h2>Items</h2>
         <h2>Add Items</h2>
-        Cost in Wei: <input type="text" name="cost" value={this.state.cost} onChange={this.handleInputChange}/>
-        Item Identifier: <input type="text" name="itemName" value={this.state.itemName} onChange={this.handleInputChange}/>
+        Cost in Wei: <input type="number" name="cost" value={this.state.cost} onChange={this.handleInputChange} />
+        Item Identifier: <input type="text" name="itemName" value={this.state.itemName} onChange={this.handleInputChange} />
         <button type="button" onClick={this.handleSubmit}>Create new item</button>
-        
+
       </div>
     );
   }
